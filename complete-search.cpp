@@ -37,14 +37,7 @@ template <typename T>
 void printPermutations(typename std::vector<T>::iterator vecBegin, typename std::vector<T>::iterator vecEnd, std::vector<T>& permutation, bool* chosen, int size);
 void printAnagrams(std::string str, std::string aux, bool* chosen);
 void backtrackingQueen(int i, int n, int* columns, int* diag1, int* diag2, int* count);
-void printState(int** grid, int nRows, int nCols);
-void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int** grid, int* visitCounter, int* solveCounter);
-bool reachedBounds(int index, int increment, int limit);
-bool alreadyVisited(int i, int j, std::pair<int, int> dir, int** grid, int nRows, int nCols);
-bool canGoEitherSide(int i, int j, std::pair<int, int> dir, int** grid, int nRows, int nCols);
-std::pair<int, int> invertPair(std::pair<int, int> p);
-std::pair<int, int> swapPair(std::pair<int, int> p);
-std::vector<int> powerSetVecSum(std::vector<int>::iterator vecBegin, std::vector<int>::iterator vecEnd);
+void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int** grid, int* visitCounter, int* solveCounter, int print, int delay);
 bool subSum(std::vector<int>::iterator vecBegin, std::vector<int>::iterator vecEnd, int target);
 
 int main() {
@@ -73,6 +66,8 @@ int main() {
     int vcount = 1;
     int scount = 0;
     std::vector<int> vec1;
+    int print = 0;
+    int delay = 0;
     
     do {
         std::cout << "Choose an option from the menu below:\n"
@@ -140,7 +135,9 @@ int main() {
             case 2:
                 std::cout << "Please enter:\n"
                         "1) the size of the chessboard to place the queens;\n"
-                        "2) the number of rows and columns of grid to search for paths.\n";
+                        "2) the number of rows and columns of grid to search for paths.\n"
+                        "3) if you want to print the search (1 - yes/ 0 - no).\n"
+                        "4) delay in milliseconds of screen update (only if you provide a 1).\n";
                 
                 // backtracking queen problem
                 std::cin >> n;  // size of the chessboard
@@ -158,8 +155,9 @@ int main() {
                 for (int i = 0; i < nRows; i++) {
                     *(grid + i) = (int *) calloc(nCols, sizeof(int));
                 }
+                std::cin >> print >> delay;
                 grid[0][0] = 1;
-                pathSearch(pairA, 0, 0, nRows, nCols, grid, &vcount, &scount);
+                pathSearch(pairA, 0, 0, nRows, nCols, grid, &vcount, &scount, print, delay);
                 std::cout << scount << std::endl;
                 
                 break;
@@ -390,8 +388,33 @@ bool canGoEitherSide(int i, int j, std::pair<int, int> new_dir, int** grid, int 
     !alreadyVisited(i, j, invertPair(new_dir), grid, nRows, nCols);
 }
 
-void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int** grid, int* visitCounter, int* solveCounter) {
+// used to visualize the path search algorithm on the console window
+// repeatedly clears window and redraws matrix
+void printState(int** grid, int nRows, int nCols, int delay) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+    ClearScreen();
+    // print paths
+    for (int m = 0; m < nRows; m++) {
+        for (int n = 0; n < nCols; n++) {
+            std::cout << grid[m][n] << " ";
+        } std::cout << std::endl;
+    } std::cout << std::endl;
+}
+
+// 'n = 1' to visit, 'n = -1' to unvisit;
+// if 'print' is true, will repeatedly clear console window and draw state of current path
+// 'delay' is how much it will wait to do this in milliseconds
+void visit(int n, int i, int j, int* visitCounter, int** grid, int nRows, int nCols, bool print=false, int delay=500) {
     
+    grid[i][j] += n;
+    *visitCounter += n;
+    
+    if (print) printState(grid, nRows, nCols, delay);
+    
+}
+
+void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int** grid, int* visitCounter, int* solveCounter, int print, int delay) {
+
     // recursion base: stop if "exit" is reached
     if (i == nRows-1 && j == nCols-1) {
         
@@ -408,71 +431,30 @@ void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int
             return;
     }
     
-    // if we were traveling vertically
-    if (dir.first != 0) {
-        if (i + dir.first >= 0 && i + dir.first < nRows && grid[i + dir.first][j] == 0) {
-            grid[i + dir.first][j + dir.second] = 1;
-            (*visitCounter)++;
-            // printState(grid, nRows, nCols);
-            pathSearch(dir, i + dir.first, j + dir.second, nRows, nCols, grid, visitCounter, solveCounter);
-            grid[i + dir.first][j + dir.second] = 0;
-            (*visitCounter)--;
-            // printState(grid, nRows, nCols);
-        }
-        if (j + 1 < nCols && grid[i][j + 1] == 0) {
-            dir.first = 0;
-            dir.second = 1;
-            grid[i + dir.first][j + dir.second] = 1;
-            (*visitCounter)++;
-            // printState(grid, nRows, nCols);
-            pathSearch(dir, i + dir.first, j + dir.second, nRows, nCols, grid, visitCounter, solveCounter);
-            grid[i + dir.first][j + dir.second] = 0;
-            (*visitCounter)--;
-            // printState(grid, nRows, nCols);
-        }
-        if (j - 1 >= 0 && grid[i][j - 1] == 0) {
-            dir.first = 0;
-            dir.second = -1;
-            grid[i + dir.first][j + dir.second] = 1;
-            (*visitCounter)++;
-            // printState(grid, nRows, nCols);
-            pathSearch(dir, i + dir.first, j + dir.second, nRows, nCols, grid, visitCounter, solveCounter);
-            grid[i + dir.first][j + dir.second] = 0;
-            (*visitCounter)--;
-            // printState(grid, nRows, nCols);
-        }
-    } else {
-        if (j + dir.second >= 0 && j + dir.second < nCols && grid[i][j + dir.second] == 0) {
-            grid[i + dir.first][j + dir.second] = 1;
-            (*visitCounter)++;
-            // printState(grid, nRows, nCols);
-            pathSearch(dir, i + dir.first, j + dir.second, nRows, nCols, grid, visitCounter, solveCounter);
-            grid[i + dir.first][j + dir.second] = 0;
-            (*visitCounter)--;
-            // printState(grid, nRows, nCols);
-        }
-        if (i + 1 < nRows && grid[i + 1][j] == 0) {
-            dir.first = 1;
-            dir.second = 0;
-            grid[i + dir.first][j + dir.second] = 1;
-            (*visitCounter)++;
-            // printState(grid, nRows, nCols);
-            pathSearch(dir, i + dir.first, j + dir.second, nRows, nCols, grid, visitCounter, solveCounter);
-            grid[i + dir.first][j + dir.second] = 0;
-            (*visitCounter)--;
-            // printState(grid, nRows, nCols);
-        }
-        if (i - 1 >= 0 && grid[i - 1][j] == 0) {
-            dir.first = -1;
-            dir.second = 0;
-            grid[i + dir.first][j + dir.second] = 1;
-            (*visitCounter)++;
-            // printState(grid, nRows, nCols);
-            pathSearch(dir, i + dir.first, j + dir.second, nRows, nCols, grid, visitCounter, solveCounter);
-            grid[i + dir.first][j + dir.second] = 0;
-            (*visitCounter)--;
-            // printState(grid, nRows, nCols);
-        }
+    if (!reachedBounds(i, j, dir, nRows, nCols) &&
+            !alreadyVisited(i, j, dir, grid, nRows, nCols)) {
+        
+        visit(1, i + dir.first, j + dir.second, visitCounter, grid, nRows, nCols, print, delay);
+        pathSearch(dir, i + dir.first, j + dir.second, nRows, nCols, grid, visitCounter, solveCounter, print, delay);
+        visit(-1, i + dir.first, j + dir.second, visitCounter, grid, nRows, nCols, print, delay);
+        
+    }
+    std::pair<int, int> swapped_dir = swapPair(dir);
+    if (!reachedBounds(i, j, swapped_dir, nRows, nCols) &&
+            !alreadyVisited(i, j, swapped_dir, grid, nRows, nCols)) {
+    
+        visit(1, i + swapped_dir.first, j + swapped_dir.second, visitCounter, grid, nRows, nCols, print, delay);
+        pathSearch(swapped_dir, i + swapped_dir.first, j + swapped_dir.second, nRows, nCols, grid, visitCounter, solveCounter, print, delay);
+        visit(-1, i + swapped_dir.first, j + swapped_dir.second, visitCounter, grid, nRows, nCols, print, delay);
+        
+    }
+    std::pair<int, int> invertedSwapped_dir = invertPair(swapped_dir);
+    if (!reachedBounds(i, j, invertedSwapped_dir, nRows, nCols) &&
+            !alreadyVisited(i, j, invertedSwapped_dir, grid, nRows, nCols)) {
+    
+        visit(1, i + invertedSwapped_dir.first, j + invertedSwapped_dir.second, visitCounter, grid, nRows, nCols, print, delay);
+        pathSearch(invertedSwapped_dir, i + invertedSwapped_dir.first, j + invertedSwapped_dir.second, nRows, nCols, grid, visitCounter, solveCounter, print, delay);
+        visit(-1, i + invertedSwapped_dir.first, j + invertedSwapped_dir.second, visitCounter, grid, nRows, nCols, print, delay);
     }
 }
 
@@ -535,21 +517,6 @@ bool subSum(std::vector<int>::iterator vecBegin, std::vector<int>::iterator vecE
     
     return false;
 }
-
-// used to visualize the path search algorithm on the console window
-// repeatedly clears window and redraws matrix
-void printState(int** grid, int nRows, int nCols) {
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(200ms);
-    ClearScreen();
-    // print paths
-    for (int m = 0; m < nRows; m++) {
-        for (int n = 0; n < nCols; n++) {
-            std::cout << grid[m][n] << " ";
-        } std::cout << std::endl;
-    } std::cout << std::endl;
-}
-
 
 /*
 backtracking queen problem test cases:
