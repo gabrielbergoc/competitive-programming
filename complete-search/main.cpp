@@ -39,6 +39,10 @@ void printAnagrams(std::string str, std::string aux, bool* chosen);
 void backtrackingQueen(int i, int n, int* columns, int* diag1, int* diag2, int* count);
 void printState(int** grid, int nRows, int nCols);
 void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int** grid, int* visitCounter, int* solveCounter);
+bool reachedBounds(int index, int increment, int limit);
+bool alreadyVisited(int i, int j, std::pair<int, int> dir, int** grid, int nRows, int nCols);
+bool canGoEitherSide(int i, int j, std::pair<int, int> dir, int** grid, int nRows, int nCols);
+std::pair<int, int> invertPair(std::pair<int, int> p);
 std::vector<int> powerSetVecSum(std::vector<int>::iterator vecBegin, std::vector<int>::iterator vecEnd);
 bool subSum(std::vector<int>::iterator vecBegin, std::vector<int>::iterator vecEnd, int target);
 
@@ -359,6 +363,30 @@ void backtrackingQueen(int i, int n, int* columns, int* diag1, int* diag2, int* 
     }
 }
 
+bool reachedBounds(int index, int increment, int limit) {
+    return index + increment == limit || index + increment < 0;
+}
+
+bool alreadyVisited(int i, int j, std::pair<int, int> dir, int** grid, int nRows, int nCols) {
+    return !reachedBounds(i, dir.first, nRows) &&
+            !reachedBounds(j, dir.second, nCols) &&
+            grid[i + dir.first][j + dir.second] != 0;
+}
+
+std::pair<int, int> invertPair(std::pair<int, int> p) {
+    return std::make_pair(-1 * p.first, -1 * p.second);
+}
+
+bool canGoEitherSide(int i, int j, std::pair<int, int> dir, int** grid, int nRows, int nCols) {
+    return
+    !reachedBounds(i, dir.first, nRows) &&
+    !reachedBounds(i, -1 * dir.first, nRows) &&
+    !reachedBounds(j, dir.second, nCols) &&
+    !reachedBounds(j, -1 * dir.second, nCols) &&
+    !alreadyVisited(i, j, dir, grid, nRows, nCols) &&
+    !alreadyVisited(i, j, invertPair(dir), grid, nRows, nCols);
+}
+
 void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int** grid, int* visitCounter, int* solveCounter) {
     
     // recursion base: stop if "exit" is reached
@@ -374,16 +402,10 @@ void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int
     if (    // if we reach the bottom of the grid and can go either side, it
             // means we split the grid in two, and some squares will become
             // inaccessible
-            (i + dir.first == nRows ||
-            // same if we reach the top of the grid
-            i + dir.first < 0 ||
+            (reachedBounds(i, dir.first, nRows) ||
             // or a square already visited
-            i + dir.first >= 0 &&
-            i + dir.first < nRows &&        // check if we can go either side
-            grid[i + dir.first][j] != 0) && j - 1 >= 0 &&
-                                            j + 1 < nCols &&
-                                            grid[i][j - 1] == 0 &&
-                                            grid[i][j + 1] == 0 ||  // OR:
+            alreadyVisited(i, j, dir, grid, nRows, nCols)) &&
+            canGoEitherSide(i, j, std::make_pair(0, 1), grid, nRows, nCols) ||  // OR:
             
             // same thing if we reach the right edge of the grid
             (j + dir.second == nCols ||
