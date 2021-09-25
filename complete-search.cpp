@@ -162,6 +162,11 @@ int main() {
                 pathSearch(pairA, 0, 0, nRows, nCols, grid, &vcount, &scount);
                 std::cout << scount << std::endl;
                 
+                // clear variables before next case
+                count = 0;
+                vcount = 1;
+                scount = 0;
+                
                 break;
             
             // meet in the middle
