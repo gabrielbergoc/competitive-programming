@@ -105,5 +105,6 @@ fabric.properties
 *.exe
 *.out
 *.app
-/.vscode/
-/anagrams.txt
+
+complete-search/anagrams.txt
+CMakeLists.txt
