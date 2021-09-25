@@ -363,13 +363,13 @@ void backtrackingQueen(int i, int n, int* columns, int* diag1, int* diag2, int* 
     }
 }
 
-bool reachedBounds(int index, int increment, int limit) {
-    return index + increment == limit || index + increment < 0;
+bool reachedBounds(int i, int j, std::pair<int, int> dir, int nRows, int nCols) {
+    return i + dir.first < 0 || i + dir.first == nRows ||
+            j + dir.second < 0 || j + dir.second == nCols;
 }
 
 bool alreadyVisited(int i, int j, std::pair<int, int> dir, int** grid, int nRows, int nCols) {
-    return !reachedBounds(i, dir.first, nRows) &&
-            !reachedBounds(j, dir.second, nCols) &&
+    return !reachedBounds(i, j, dir, nRows, nCols) &&
             grid[i + dir.first][j + dir.second] != 0;
 }
 
@@ -377,14 +377,12 @@ std::pair<int, int> invertPair(std::pair<int, int> p) {
     return std::make_pair(-1 * p.first, -1 * p.second);
 }
 
-bool canGoEitherSide(int i, int j, std::pair<int, int> dir, int** grid, int nRows, int nCols) {
+bool canGoEitherSide(int i, int j, std::pair<int, int> new_dir, int** grid, int nRows, int nCols) {
     return
-    !reachedBounds(i, dir.first, nRows) &&
-    !reachedBounds(i, -1 * dir.first, nRows) &&
-    !reachedBounds(j, dir.second, nCols) &&
-    !reachedBounds(j, -1 * dir.second, nCols) &&
-    !alreadyVisited(i, j, dir, grid, nRows, nCols) &&
-    !alreadyVisited(i, j, invertPair(dir), grid, nRows, nCols);
+    !reachedBounds(i, j, new_dir, nRows, nCols) &&
+    !reachedBounds(i, j, invertPair(new_dir), nRows, nCols) &&
+    !alreadyVisited(i, j, new_dir, grid, nRows, nCols) &&
+    !alreadyVisited(i, j, invertPair(new_dir), grid, nRows, nCols);
 }
 
 void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int** grid, int* visitCounter, int* solveCounter) {
@@ -402,7 +400,7 @@ void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int
     if (    // if we reach the bottom of the grid and can go either side, it
             // means we split the grid in two, and some squares will become
             // inaccessible
-            (reachedBounds(i, dir.first, nRows) ||
+            (reachedBounds(i, j, dir, nRows, nCols) ||
             // or a square already visited
             alreadyVisited(i, j, dir, grid, nRows, nCols)) &&
             canGoEitherSide(i, j, std::make_pair(0, 1), grid, nRows, nCols) ||  // OR:

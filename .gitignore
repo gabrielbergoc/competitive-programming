@@ -106,5 +106,5 @@ fabric.properties
 *.out
 *.app
 
-complete-search/anagrams.txt
+anagrams.txt
 CMakeLists.txt
