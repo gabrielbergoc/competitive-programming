@@ -43,6 +43,7 @@ bool reachedBounds(int index, int increment, int limit);
 bool alreadyVisited(int i, int j, std::pair<int, int> dir, int** grid, int nRows, int nCols);
 bool canGoEitherSide(int i, int j, std::pair<int, int> dir, int** grid, int nRows, int nCols);
 std::pair<int, int> invertPair(std::pair<int, int> p);
+std::pair<int, int> swapPair(std::pair<int, int> p);
 std::vector<int> powerSetVecSum(std::vector<int>::iterator vecBegin, std::vector<int>::iterator vecEnd);
 bool subSum(std::vector<int>::iterator vecBegin, std::vector<int>::iterator vecEnd, int target);
 
@@ -377,6 +378,10 @@ std::pair<int, int> invertPair(std::pair<int, int> p) {
     return std::make_pair(-1 * p.first, -1 * p.second);
 }
 
+std::pair<int, int> swapPair(std::pair<int, int> p) {
+    return std::make_pair(p.second, p.first);
+}
+
 bool canGoEitherSide(int i, int j, std::pair<int, int> new_dir, int** grid, int nRows, int nCols) {
     return
     !reachedBounds(i, j, new_dir, nRows, nCols) &&
@@ -397,27 +402,10 @@ void pathSearch(std::pair<int, int> dir, int i, int j, int nRows, int nCols, int
         return;
     }
     
-    if (    // if we reach the bottom of the grid and can go either side, it
-            // means we split the grid in two, and some squares will become
-            // inaccessible
-            (reachedBounds(i, j, dir, nRows, nCols) ||
-            // or a square already visited
-            alreadyVisited(i, j, dir, grid, nRows, nCols)) &&
-            canGoEitherSide(i, j, std::make_pair(0, 1), grid, nRows, nCols) ||  // OR:
-            
-            // same thing if we reach the right edge of the grid
-            (j + dir.second == nCols ||
-            // or the left edge
-            j + dir.second < 0 ||
-            // or a square already visited
-            j + dir.second >= 0 &&
-            j + dir.second < nCols &&       // check if we can go either side
-            grid[i][j + dir.second] != 0) && i - 1 >= 0 &&
-                                             i + 1 < nRows &&
-                                             grid[i - 1][j] == 0 &&
-                                             grid[i + 1][j] == 0
-            ) {
-        return;
+    if ((reachedBounds(i, j, dir, nRows, nCols) ||
+        alreadyVisited(i, j, dir, grid, nRows, nCols)) &&
+        canGoEitherSide(i, j, swapPair(dir), grid, nRows, nCols)) {
+            return;
     }
     
     // if we were traveling vertically
